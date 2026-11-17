@@ -95,21 +95,4 @@ python scripts/evaluar.py    # regresión con el LLM real
 
 La evaluación compara cada número contra una **consulta SQL de referencia**. También verifica que se haya recuperado la fuente esperada, que la respuesta no filtre datos personales y que el asistente diga "no sé" en preguntas fuera de alcance. Para trazas en producción alcanza con `LANGSMITH_TRACING=true`.
 
-## Cuándo conviene esta versión
-
-- Cuando hay dos tipos de fuentes bien distintas (datos estructurados y documentos), cada una con sus reglas y su prompt.
-- Cuando el paralelismo ayuda a bajar la latencia.
-- Cuando se quiere cambiar o reutilizar un agente sin tocar el otro. Por ejemplo, usar el agente de datos en otro asistente, o un modelo más barato para documentos (`LLM_MODEL_RAPIDO`).
-
-Cada agente tiene pocas tools y un prompt corto, el flujo es fijo y fácil de leer, y no hay un supervisor que replanifique.
-
-## Cómo llevarlo a producción
-
-| Demo | Producción |
-|---|---|
-| SQLite sintético | BigQuery / Synapse / Databricks con usuario de solo lectura |
-| `ontologia.json` | Grafo en Neo4j / Neptune, ontología basada en FIBO o BIAN, sincronizada con Collibra / Purview |
-| BM25 en memoria con `Acceso:` | Azure AI Search con búsqueda híbrida y security trimming por grupo de Entra ID |
-| CLI / FastAPI local | FastAPI en AKS o Azure Functions, Azure OpenAI dentro del tenant, Key Vault |
-
 > Todos los datos, documentos y políticas del repo son ficticios.
