@@ -1,0 +1,149 @@
+{
+  "version": "2026.11",
+  "descripcion": "Capa semántica de ejemplo para un banco ficticio. Los puntajes de confianza simulan el motor de confianza y el campo 'certificado' la aprobación del data steward del dominio.",
+  "tablas": {
+    "clientes": {
+      "descripcion": "Un registro por cliente del banco.",
+      "columnas": {
+        "id": {"tipo": "INTEGER", "descripcion": "Identificador interno del cliente (clave primaria)."},
+        "nombre": {"tipo": "TEXT", "descripcion": "Nombre o razón social.", "sensible": true},
+        "documento": {"tipo": "TEXT", "descripcion": "Documento de identidad o CUIT.", "sensible": true},
+        "email": {"tipo": "TEXT", "descripcion": "Correo electrónico de contacto.", "sensible": true},
+        "segmento": {"tipo": "TEXT", "descripcion": "Segmento comercial: 'minorista', 'pyme' o 'corporativo'."},
+        "fecha_alta": {"tipo": "DATE", "descripcion": "Fecha de alta del cliente (YYYY-MM-DD)."},
+        "fecha_ultimo_movimiento": {"tipo": "DATE", "descripcion": "Fecha del último movimiento en cualquier producto (YYYY-MM-DD)."},
+        "estado_contrato": {"tipo": "TEXT", "descripcion": "Estado del contrato marco: 'vigente' o 'cerrado'."}
+      }
+    },
+    "prestamos": {
+      "descripcion": "Un registro por préstamo otorgado.",
+      "columnas": {
+        "id": {"tipo": "INTEGER", "descripcion": "Identificador del préstamo (clave primaria)."},
+        "cliente_id": {"tipo": "INTEGER", "descripcion": "Cliente titular (clave foránea a clientes.id)."},
+        "producto": {"tipo": "TEXT", "descripcion": "Tipo de préstamo: 'personal', 'hipotecario' o 'prendario'."},
+        "monto_otorgado": {"tipo": "REAL", "descripcion": "Capital otorgado, en pesos."},
+        "saldo_pendiente": {"tipo": "REAL", "descripcion": "Capital pendiente de pago, en pesos."},
+        "fecha_otorgamiento": {"tipo": "DATE", "descripcion": "Fecha de otorgamiento (YYYY-MM-DD)."},
+        "dias_atraso": {"tipo": "INTEGER", "descripcion": "Días de atraso de la cuota más antigua impaga (0 si está al día)."},
+        "estado": {"tipo": "TEXT", "descripcion": "'vigente' o 'cancelado'."}
+      }
+    }
+  },
+  "conceptos": [
+    {
+      "id": "cliente",
+      "nombre": "Cliente",
+      "definicion": "Persona física o jurídica con al menos un producto contratado con el banco.",
+      "sinonimos": ["clientes"],
+      "tablas": ["clientes"],
+      "expresion_sql": null,
+      "dominio": "Clientes",
+      "steward": "Data steward de Clientes",
+      "confianza": 98,
+      "certificado": true,
+      "version": "1.0"
+    },
+    {
+      "id": "cliente_activo",
+      "nombre": "Cliente activo",
+      "definicion": "Cliente con al menos un movimiento en cualquier producto en los últimos 90 días.",
+      "sinonimos": ["clientes activos"],
+      "tablas": ["clientes"],
+      "expresion_sql": "clientes.fecha_ultimo_movimiento >= date('now', '-90 days')",
+      "dominio": "Clientes",
+      "steward": "Data steward de Clientes",
+      "confianza": 96,
+      "certificado": true,
+      "version": "1.2"
+    },
+    {
+      "id": "cliente_vigente",
+      "nombre": "Cliente con contrato vigente",
+      "definicion": "Cliente cuyo contrato marco está vigente, sin importar si opera o no. Definición usada por el área Comercial; pendiente de certificación.",
+      "sinonimos": ["cliente vigente", "clientes vigentes", "clientes con contrato vigente"],
+      "tablas": ["clientes"],
+      "expresion_sql": "clientes.estado_contrato = 'vigente'",
+      "dominio": "Clientes",
+      "steward": "Data steward de Clientes",
+      "confianza": 62,
+      "certificado": false,
+      "version": "0.3"
+    },
+    {
+      "id": "segmento",
+      "nombre": "Segmento",
+      "definicion": "Clasificación comercial del cliente: minorista, pyme o corporativo.",
+      "sinonimos": ["segmentos", "pyme", "pymes", "minorista", "minoristas", "corporativo", "corporativos"],
+      "tablas": ["clientes"],
+      "expresion_sql": "clientes.segmento",
+      "dominio": "Clientes",
+      "steward": "Data steward de Clientes",
+      "confianza": 95,
+      "certificado": true,
+      "version": "1.0"
+    },
+    {
+      "id": "prestamo",
+      "nombre": "Préstamo",
+      "definicion": "Contrato de crédito otorgado a un cliente (personal, hipotecario o prendario). Un préstamo 'vigente' todavía tiene saldo por pagar.",
+      "sinonimos": ["préstamos", "prestamo", "prestamos", "crédito", "créditos", "hipotecario", "hipotecarios", "prendario", "prendarios"],
+      "tablas": ["prestamos"],
+      "expresion_sql": null,
+      "dominio": "Riesgo crediticio",
+      "steward": "Data steward de Riesgo",
+      "confianza": 97,
+      "certificado": true,
+      "version": "1.0"
+    },
+    {
+      "id": "mora",
+      "nombre": "Mora",
+      "definicion": "Situación de un préstamo vigente con más de 30 días de atraso en el pago.",
+      "sinonimos": ["en mora", "morosidad", "moroso", "morosos", "morosa"],
+      "tablas": ["prestamos"],
+      "expresion_sql": "prestamos.estado = 'vigente' AND prestamos.dias_atraso > 30",
+      "dominio": "Riesgo crediticio",
+      "steward": "Data steward de Riesgo",
+      "confianza": 94,
+      "certificado": true,
+      "version": "2.1"
+    },
+    {
+      "id": "cartera_en_mora",
+      "nombre": "Cartera en mora",
+      "definicion": "Suma del saldo pendiente de los préstamos en mora.",
+      "sinonimos": ["saldo en mora", "cartera morosa", "deuda en mora", "monto en mora"],
+      "tablas": ["prestamos"],
+      "expresion_sql": "SUM(CASE WHEN prestamos.estado = 'vigente' AND prestamos.dias_atraso > 30 THEN prestamos.saldo_pendiente ELSE 0 END)",
+      "dominio": "Riesgo crediticio",
+      "steward": "Data steward de Riesgo",
+      "confianza": 91,
+      "certificado": true,
+      "version": "1.1"
+    },
+    {
+      "id": "politica_cobranza",
+      "nombre": "Política de cobranza",
+      "definicion": "Norma interna que define cómo, cuándo y por qué canal contactar a clientes con préstamos en mora.",
+      "sinonimos": ["cobranza", "cobranzas", "politica de cobranza"],
+      "tablas": [],
+      "expresion_sql": null,
+      "documento": "politica_cobranza_v3.md",
+      "dominio": "Cobranzas",
+      "steward": "Data steward de Cobranzas",
+      "confianza": 99,
+      "certificado": true,
+      "version": "3.0"
+    }
+  ],
+  "relaciones": [
+    {"origen": "cliente_activo", "tipo": "ES_UN", "destino": "cliente"},
+    {"origen": "cliente_vigente", "tipo": "ES_UN", "destino": "cliente"},
+    {"origen": "cliente_activo", "tipo": "NO_CONFUNDIR_CON", "destino": "cliente_vigente"},
+    {"origen": "cliente", "tipo": "PERTENECE_A", "destino": "segmento"},
+    {"origen": "cliente", "tipo": "TIENE", "destino": "prestamo", "join": "clientes.id = prestamos.cliente_id"},
+    {"origen": "mora", "tipo": "APLICA_A", "destino": "prestamo"},
+    {"origen": "cartera_en_mora", "tipo": "SE_CALCULA_CON", "destino": "mora"},
+    {"origen": "mora", "tipo": "REGULADA_POR", "destino": "politica_cobranza"}
+  ]
+}
