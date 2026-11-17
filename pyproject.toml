@@ -1,0 +1,36 @@
+[project]
+name = "multi-agent-rag"
+version = "0.1.0"
+description = "RAG multiagente con capa semántica (grafo de conocimiento), SQL de solo lectura, búsqueda documental y validación de groundedness, orquestado con LangGraph."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "langgraph>=0.2",
+    "langchain>=0.3",
+    "langchain-core>=0.3",
+    "pydantic>=2.6",
+    "python-dotenv>=1.0",
+    "networkx>=3.2",
+    "rich>=13.7",
+]
+
+[project.optional-dependencies]
+openai = ["langchain-openai>=0.2"]
+anthropic = ["langchain-anthropic>=0.3"]
+api = ["fastapi>=0.110", "uvicorn>=0.29"]
+mcp = ["mcp>=2.0"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+mar = "multi_agent_rag.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/multi_agent_rag"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

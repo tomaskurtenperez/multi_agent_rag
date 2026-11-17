@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.env
+data/banco.db
+eval/resultados*.json
+
+# Notas personales de preparación (no publicar)
+preparacion_entrevista_ntt_data.md
